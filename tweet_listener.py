@@ -4,6 +4,7 @@ import tweepy
 import configparser
 import json
 from datetime import datetime
+import authentication
 
 dt_0 = datetime.now()
 
@@ -11,21 +12,9 @@ dt_0 = datetime.now()
 keyword_filter = "FiltroFiducia.txt"
 rate_limit = True
 
-# read api keys from configs
-config = configparser.ConfigParser()
-config.read("twitter api/config.ini")
-
-API_KEY = ""
-API_KEY_SECRET = ""
-BEARER_TOKEN = ""
-ACCESS_TOKEN = ""
-ACCESS_TOKEN_SECRET = ""
-
 # authentication
-client = tweepy.Client(BEARER_TOKEN, API_KEY, API_KEY_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-
-auth = tweepy.OAuth1UserHandler(API_KEY, API_KEY_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-api = tweepy.API(auth)
+auth = authentication.get_auth("auth/config.ini")
+api = auth['api']
 
 # define the tweet listener
 class TweetListenerISTAT_V2(tweepy.StreamingClient):
@@ -47,7 +36,7 @@ class TweetListenerISTAT_V2(tweepy.StreamingClient):
         if tweet_code == 420:
             return False        
 
-listener = TweetListenerISTAT_V2(BEARER_TOKEN, wait_on_rate_limit=rate_limit)
+listener = TweetListenerISTAT_V2(auth['BEARER_TOKEN'], wait_on_rate_limit=rate_limit)
 
 # clean-up pre-existing rules
 rule_ids = []
@@ -59,7 +48,7 @@ if result.data != None:
         rule_ids.append(rule.id)
 
         listener.delete_rules(rule_ids)
-        listener = TweetListenerISTAT_V2(BEARER_TOKEN, wait_on_rate_limit=rate_limit)
+        listener = TweetListenerISTAT_V2(auth['BEARER_TOKEN'], wait_on_rate_limit=rate_limit)
 else:
     print("no rules to delete")
 

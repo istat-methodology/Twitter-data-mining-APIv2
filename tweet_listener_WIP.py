@@ -41,4 +41,7 @@ listener = TweetListenerISTAT_V2(bearer_token = auth['BEARER_TOKEN'],
 
 # rules
 listener = rule_handler.clean_rules(listener)
-rule_handler.add_rules(keywords="FiltroIstat.txt", api="elevated")
+#rule_handler.add_rules2(keywords="FiltroIstat.txt", api="elevated")
+
+x = rule_handler.split_string(keywords="FiltroIstat.txt", api='elevated')
+print(x)

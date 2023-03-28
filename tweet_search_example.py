@@ -51,7 +51,7 @@ for tweet in tweets1:
     tweets1_lst.append(tweet)
     print(len(tweets1_lst))
 
-with open(f'tweets5.json', 'w') as tf:
+with open(f'data/output/search_data/tweets5.json', 'w') as tf:
             tf.write('\n')
             json.dump(tweets1_lst, tf)
 
@@ -60,6 +60,6 @@ for tweet in tweets2:
     tweets2_lst.append(tweet)
     print(len(tweets1_lst)+len(tweets2_lst))
 
-with open(f'tweets6.json', 'w') as tf:
+with open(f'data/output/search_data/tweets6.json', 'w') as tf:
             tf.write('\n')
             json.dump(tweets2_lst, tf)

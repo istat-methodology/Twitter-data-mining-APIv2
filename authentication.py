@@ -3,6 +3,17 @@ import configparser
 
 # read config.ini file
 def get_auth(config_file_path):
+
+    """
+    Handles the Twitter API authentication process.
+
+    Args:
+        config_file_path (str): Path of the config file containing personal API details.
+    
+    Returns:
+        dict: Dictionary with API keys and methods.
+    """
+
     config = configparser.ConfigParser()
     config.read(config_file_path)
 

@@ -1,3 +1,5 @@
+# TWEET SEARCH EARLY EXAMPLE
+
 import tweepy
 import json
 import datetime

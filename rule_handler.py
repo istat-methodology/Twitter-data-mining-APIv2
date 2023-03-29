@@ -4,6 +4,16 @@ import tweepy
 
 # clean_rules: this function deletes all the rules from the filtered stream passed as an argument
 def clean_rules(tweet_listener):
+
+    """
+    Deletes all the pre-existing rules applied to the filtered stream.
+
+    Args:
+        tweet_listener (variable): The filtered stream object.
+    
+    Returns:
+        variable: Clean filtered stream object.
+    """
     
     result = tweet_listener.get_rules()
 
@@ -16,36 +26,44 @@ def clean_rules(tweet_listener):
     
     return tweet_listener
 
-# query_builder: this function automatically builds Twitter API v2 queries based on keywords
-def query_builder(keywords, language, query, api):
+def query_builder(keywords, language=None, query=None, api="elevated"):
 
-    if language != None:
+    """
+    Builds a query string based on the provided keywords, language, and query parameters.
+
+    Args:
+        keywords (list of str): List of keywords to be included in the query.
+        language (str, optional): Language to be included in the query. Defaults to None.
+        query (str, optional): Additional query parameter to be included in the query. Defaults to None.
+        api (str, optional): API to be used for the query. Defaults to 'elevated'.
+
+    Returns:
+        list of str: List of query strings to be used in the search.
+    """
+
+    if language is not None:
         lang_string = f" lang:{language}"
-        len_lang_string = len(lang_string)
-    
-    if query != None:
-        query_string = f" {query}"
-        len_query_string = len(query_string)
     else:
-        query_string = None
-        len_query_string = 0
+        lang_string = ""
     
-    if (len_lang_string + len_query_string) > 0:
-        len_query = (len_lang_string + len_query_string) - 2 # -2 accounts for the parentheses
+    if query is not None:
+        query_string = f" {query}"
+    else:
+        query_string = ""
+
+    if (len(lang_string + query_string)) > 0:
+        len_query = len(lang_string + query_string) + 2    # -2 accounts for the () brackets
     else:
         len_query = 0
 
     if api == 'essential':
-        max_chars = 512 - len_query
-        max_rules = 5
+        max_chars, max_rules = (512 - len_query), 5
     elif api == 'elevated':
-        max_chars = 512 - len_query
-        max_rules = 25
+        max_chars, max_rules = (512 - len_query), 25
     elif api == 'academic':
-        max_chars = 1024 - len_query
-        max_rules = 1000
+        max_chars, max_rules = (1024 - len_query), 1000
     else:
-        print("\nERROR: 'api' must be 'essential', 'elevated' or 'academic'.")
+        raise ValueError("\nERROR: 'api' must be either 'essential', 'elevated' or 'academic'.")
 
     # Create a single string from the list
     single_string = " OR ".join(keywords)
@@ -77,11 +95,40 @@ def query_builder(keywords, language, query, api):
         start = end + 1
     
     if n_rules > max_rules:
-        print(f"""WARNING: the number of rules ({n_rules}) exceeds the maximum number of rules ({max_rules}) 
-        allowed by your API ({api}).""")
+        print(f"""\nWARNING: the number of rules ({n_rules}) exceeds the maximum number of rules ({max_rules}) 
+        allowed by your API ({api}).\n""")
     else:
         print(f"\nthe final number of rules is {n_rules}.\n")
 
     split_strings_final = [keyword.replace("|", " ") for keyword in split_strings]
 
     return split_strings_final
+
+# push_rules: this function automatically adds a list of rules to the stream
+def push_rules(tweet_listener, rules, rule_tag=None, clean_push=False):
+
+    """
+    Adds a list of rules to the filtered stream.
+
+    Args:
+        tweet_listener (variable): The filtered stream object to add the rules to.
+        rules(list of str): List of rules to be applied to the filtered stream.
+        rule_tag (str, optional): Tag of the set of rules. Defaults to None.
+        clean_push (bool, optional): If True, clean rules before adding new ones. Defaults to False.
+    
+    Returns:
+        variable: Filtered stream object.
+    """
+
+    if clean_push == True:
+        clean_rules(tweet_listener)
+
+    rules = []
+
+    for i in range(0, len(rules)):
+        rule_i = tweepy.StreamRule(rules[i], tag=rule_tag)
+        rules.append(rule_i)
+    
+    tweet_listener.add_rules(rules)
+
+    return tweet_listener

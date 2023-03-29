@@ -1,4 +1,4 @@
-# TWEET LISTENER - WORK IN PROGRESS!!!
+# TWEET LISTENER EXAMPLE - FILTERED STREAM
 
 import tweepy
 import configparser
@@ -8,15 +8,15 @@ import authentication
 import rule_handler
 
 d0 = datetime.now()
+
+# HYPERPARAMETERS
+rate_limit = True
 launch = False    # True if you want to start collecting tweets
 
-# hyperparameters
-keywords_filter = "FiltroIstat.txt"
-rate_limit = True
-path_data = "output/listener_data"
 
 # AUTHENTICATION
-auth = authentication.get_auth("auth/config.ini")
+auth = authentication.get_auth(config_file_path="auth/config.ini")
+
 
 # TWEET LISTENER
 
@@ -41,6 +41,7 @@ class TweetListenerISTAT_V2(tweepy.StreamingClient):
 
 listener = TweetListenerISTAT_V2(bearer_token = auth['BEARER_TOKEN'], 
                                  wait_on_rate_limit = rate_limit)
+
 # FILTERS
 
 # import and pre-process the filter
@@ -57,6 +58,7 @@ keywords_filter_fiducia = [word.strip() for word in keywords_filter_fiducia_nosp
 keywords_filter_istat_unique = [word for word in keywords_filter_istat if word not in keywords_filter_fiducia]
 keywords_filter_fiducia_unique = [word for word in keywords_filter_fiducia if word not in keywords_filter_istat]
 
+
 # RULES
 
 # delete pre-existing rules
@@ -69,20 +71,12 @@ rule_list_fiducia = rule_handler.query_builder(keywords=keywords_filter_fiducia,
                                                api='elevated', language='it', query='')
 
 # add the rules to the filtered stream
-rules = []
+listener = rule_handler.push_rules(tweet_listener=listener, rules=rule_list_istat,
+                                   rule_tag="filtro_istat", clean_push=False)
 
-for i in range(0, len(rule_list_istat)):
-    rule_i = tweepy.StreamRule(rule_list_istat[i], tag='filtro_istat')
-    rules.append(rule_i)
+listener = rule_handler.push_rules(tweet_listener=listener, rules=rule_list_fiducia,
+                                   rule_tag="filtro_fiducia", clean_push=False)
 
-for i in range(0, len(rule_list_fiducia)):
-    rule_i = tweepy.StreamRule(rule_list_fiducia[i], tag='filtro_fiducia')
-    rules.append(rule_i)
-
-if len(rules) > 25:
-    print(f"number of rules ({len(rules)}) exceeds API limit")
-
-listener.add_rules(rules)
 
 # launch the listener and choose what to store
 if launch == True:

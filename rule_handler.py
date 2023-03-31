@@ -17,7 +17,7 @@ def clean_rules(tweet_listener):
     
     result = tweet_listener.get_rules()
 
-    if result.data != None:
+    if result.data is not None:
         rule_ids = [rule for rule in result.data]
         print(f"\nrule(s) marked to delete: {rule_ids}")
         tweet_listener.delete_rules(rule_ids)
@@ -25,6 +25,7 @@ def clean_rules(tweet_listener):
         print("\nno rules to delete.")
     
     return tweet_listener
+
 
 def query_builder(keywords, language=None, query=None, api="elevated"):
 
@@ -40,29 +41,19 @@ def query_builder(keywords, language=None, query=None, api="elevated"):
     Returns:
         list of str: List of query strings to be used in the search.
     """
-
-    if language is not None:
-        lang_string = f" lang:{language}"
-    else:
-        lang_string = ""
+    lang_string = f" lang:{language}" if language else ""
+    query_string = f" {query}" if query else ""
     
-    if query is not None:
-        query_string = f" {query}"
-    else:
-        query_string = ""
+    len_query = len(lang_string + query_string)
+    len_query += 2 if len_query > 0 else 0
 
-    if (len(lang_string + query_string)) > 0:
-        len_query = len(lang_string + query_string) + 2    # -2 accounts for the () brackets
-    else:
-        len_query = 0
-
-    if api == 'essential':
-        max_chars, max_rules = (512 - len_query), 5
-    elif api == 'elevated':
-        max_chars, max_rules = (512 - len_query), 25
-    elif api == 'academic':
-        max_chars, max_rules = (1024 - len_query), 1000
-    else:
+    api_options = {
+        'essential': (512 - len_query, 5),
+        'elevated': (512 - len_query, 25),
+        'academic': (1024 - len_query, 1000)
+    }
+    max_chars, max_rules = api_options.get(api, None)
+    if max_chars is None:
         raise ValueError("\nERROR: 'api' must be either 'essential', 'elevated' or 'academic'.")
 
     # Create a single string from the list
@@ -72,33 +63,30 @@ def query_builder(keywords, language=None, query=None, api="elevated"):
     n_rules = 0
     start = 0
     while start < len(single_string):
-        n_rules = n_rules + 1
+        n_rules += 1
         # Find the end of the substring based on the maximum length
         end = start + max_chars
-        if end < len(single_string):
-            # If the substring ends in the middle of a word, adjust the end to the end of the previous word
-            while single_string[end] != " ":
-                end -= 1
+        # If the substring ends in the middle of a word, adjust the end to the end of the previous word
+        end = single_string.rfind(" ", start, end+1)
+        if end == -1:
+            end = start + max_chars
         # If the substring ends in "OR", adjust the end to exclude it
-        if single_string[end-2:end] == "OR":
+        if single_string.endswith(" OR", start, end):
             end -= 3
         # If the substring starts with "OR", adjust the start to exclude it
-        if single_string[start:start+3] == "OR ":
+        if single_string.startswith("OR ", start, end):
             start += 3
         query_i = f"({single_string[start:end]}){lang_string}{query_string}"
         # If the final string ends with a blank space, adjust the end to remove it
-        if query_i[-1] == " ":
-            query_i_nospace = query_i[:-1]
-            split_strings.append(query_i_nospace)
-        else:
-            split_strings.append(query_i)
+        query_i = query_i.rstrip()
+        split_strings.append(query_i)
         start = end + 1
     
     if n_rules > max_rules:
         print(f"""\nWARNING: the number of rules ({n_rules}) exceeds the maximum number of rules ({max_rules}) 
-        allowed by your API ({api}).\n""")
+        allowed by your API ({api}).""")
     else:
-        print(f"\nthe final number of rules is {n_rules}.\n")
+        print(f"\nthe final number of rules is {n_rules}.")
 
     split_strings_final = [keyword.replace("|", " ") for keyword in split_strings]
 
@@ -132,6 +120,7 @@ def push_rules(tweet_listener, rules, rule_tag=None, clean_push=False):
     tweet_listener.add_rules(rules)
 
     return tweet_listener
+
 
 def rule_handler(tweet_listener, keywords, api_tier='elevated', language='it', query='', clean_rules=True):
 

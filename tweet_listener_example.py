@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 import authentication
 import rule_handler
+import data_writer
 
 d0 = datetime.now()
 
@@ -15,7 +16,9 @@ launch = False    # True if you want to start collecting tweets
 
 
 # AUTHENTICATION
-auth = authentication.get_auth(config_file_path="auth/config.ini")
+auth = authentication.get_auth(config_file="auth/config.ini", auth_method="OAuth2")
+api = auth[0]
+auth_keys = auth[1]
 
 
 # TWEET LISTENER
@@ -39,7 +42,7 @@ class TweetListenerISTAT_V2(tweepy.StreamingClient):
         if tweet_code == 420:
             return False        
 
-listener = TweetListenerISTAT_V2(bearer_token = auth['BEARER_TOKEN'], 
+listener = TweetListenerISTAT_V2(bearer_token = auth_keys['BEARER_TOKEN'], 
                                  wait_on_rate_limit = rate_limit)
 
 # FILTERS

@@ -2,22 +2,21 @@ import tweepy
 import configparser
 
 # read config.ini file
-def get_auth(config_file_path):
+def get_auth(config_file, auth_method='OAuth2'):
 
     """
     Handles the Twitter API authentication process.
 
     Args:
-        config_file_path (str): Path of the config file containing personal API details.
-    
+        config_file (str): Path of the config file containing personal API details.
+        auth_method (str): authentication method, either OAuth1 or OAuth2. Defaults to 'OAuth2'.
+
     Returns:
         dict: Dictionary with API keys and methods.
     """
 
     config = configparser.ConfigParser()
-    config.read(config_file_path)
-
-    auth_method = config['twitter API']['authentication_method']
+    config.read(config_file)
 
     API_KEY = config['twitter API']['API_KEY']
     API_KEY_SECRET = config['twitter API']['API_KEY_SECRET']
@@ -53,4 +52,27 @@ def get_auth(config_file_path):
                   "ACCESS_TOKEN": ACCESS_TOKEN,
                   "ACCESS_TOKEN_SECRET": ACCESS_TOKEN_SECRET}
 
-    return(auth_final)
+    return(api, auth_final)
+
+
+def load_config_multi(config_file):
+    """
+    Loads authentication credentials from a config file
+
+    Args:
+        config_file (str): Path of the config file containing personal API details.
+
+    Returns:
+        list of dict: Each dictionary represents the authentication credentials for a single set of API keys.
+    """
+    config = configparser.ConfigParser()
+    config.read(config_file)
+
+    auth_list = []
+    for section in config.sections():
+        auth_dict = {}
+        for key, value in config.items(section):
+            auth_dict[key] = value
+        auth_list.append(auth_dict)
+    
+    return auth_list

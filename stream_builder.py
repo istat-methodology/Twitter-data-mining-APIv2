@@ -45,3 +45,32 @@ def stream_builder(bearer_token, display_text=False, store_data=False, data_path
                                  wait_on_rate_limit=wait_on_rate_limit)
     
     return listener
+
+def stream_launcher(tweet_listener, detail='text'):
+        
+    """
+    Launches a tweet stream listener and filters tweets based on level of detail.
+    
+    Args:
+    tweet_listener (tweepy.StreamingClient): A tweepy stream listener object.
+    detail (str): Level of detail for tweet data to collect. 
+                  Possible values: 'text', 'all' (default: 'text')
+    
+    Returns:
+    None
+    """
+        
+    if detail == 'text':
+        tweet_listener.filter(
+            tweet_fields="text"
+        )
+
+    elif detail == 'all':
+        tweet_listener.filter(
+        expansions="attachments.poll_ids,attachments.media_keys,author_id,geo.place_id,in_reply_to_user_id,referenced_tweets.id,entities.mentions.username,referenced_tweets.id.author_id",
+        tweet_fields="attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,reply_settings,source,text,withheld,edit_history_tweet_ids,edit_controls",
+        poll_fields="duration_minutes,end_datetime,id,options,voting_status",
+        place_fields="contained_within,country,country_code,full_name,geo,id,name,place_type",
+        user_fields="created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
+        media_fields="duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width"
+        )

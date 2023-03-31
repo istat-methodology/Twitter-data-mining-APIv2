@@ -112,7 +112,7 @@ def push_rules(tweet_listener, rules, rule_tag=None, clean_push=False):
 
     Args:
         tweet_listener (variable): The filtered stream object to add the rules to.
-        rules(list of str): List of rules to be applied to the filtered stream.
+        rules (list of str): List of rules to be applied to the filtered stream.
         rule_tag (str, optional): Tag of the set of rules. Defaults to None.
         clean_push (bool, optional): If True, clean rules before adding new ones. Defaults to False.
     
@@ -133,8 +133,24 @@ def push_rules(tweet_listener, rules, rule_tag=None, clean_push=False):
 
     return tweet_listener
 
-def rule_handler(tweet_listener, keywords, api_tier='elevated', language='it', query=''):
-    listener = rule_handler.clean_rules(tweet_listener)
+def rule_handler(tweet_listener, keywords, api_tier='elevated', language='it', query='', clean_rules=True):
+
+    """
+    Update the rules for a Twitter stream listener based on a set of keywords.
+
+    Parameters:
+    - tweet_listener: An instance of tweepy.StreamingClient or one of its subclasses, representing the listener to which the rules should be applied.
+    - keywords (list of str): A set or list of strings representing the keywords to use for the rules.
+    - api_tier (str): A string representing the Twitter API tier to use for the rules. Default: 'elevated'.
+    - language (str): A string representing the language of the tweets to be captured by the rules. Default: 'it'.
+    - query (str): A string representing additional filters to apply to the rules. Default: ''.
+    - clean_rules (bool): Whether to delete pre-existing rules before adding the new ones. Defaults to True.
+
+    Returns:
+    - A tweepy.StreamingClient or one of its subclasses, representing the updated listener with the new rules in place.
+    """
+    if clean_rules == True:
+        listener = rule_handler.clean_rules(tweet_listener)
 
     query_list = []
 

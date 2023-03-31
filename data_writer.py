@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 
-def write_tweets_to_json(data, d0, path="data/output/listener_data", format_string="{prefix}.{now.year}{now.month:02d}{now.day:02d}-{now.hour:02d}.{suffix}.json"):
+def write_tweets_to_json(data, d0, path="output/listener_data", format_string="{prefix}.{now.year}{now.month:02d}{now.day:02d}-{now.hour:02d}.{suffix}.json"):
     """
     Writes the given JSON data to a file with a formatted name.
 

@@ -5,10 +5,10 @@ import data_writer
 import json
 import authentication
 import rule_handler
+import stream_builder
 from datetime import datetime
 
-d0 = datetime.now()
-wait_on_rate_limit = True
+api_tier = 'elevated'
 launch_stream = False
 
 # Enter your API keys and access tokens
@@ -16,46 +16,23 @@ auth = authentication.get_auth(config_file="auth/config.ini", auth_method="OAuth
 api = auth[0]
 auth_keys = auth[1]
 
-# Create a stream listener
-class MyStreamListener(tweepy.StreamingClient):
-
-    def on_connect(self):                       
-        print("Listener Connected")
-    
-    def on_data(self, data):
-        # Define what to do when a new tweet is received
-        jsonData = json.loads(data)
-        data_writer.write_tweets_to_json(data=jsonData,
-                                         d0=d0,
-                                         format_string="{prefix}.{now.year}{now.month:02d}{now.day:02d}-{now.hour:02d}.{suffix}.json")        
-        
-    def on_error(self, status_code):
-        # Define what to do when an error occurs
-        if status_code == 420:
-            print("Rate limit exceeded. Disconnecting the stream...")
-            return False
-
-# Set up a filtered stream
-listener = MyStreamListener(bearer_token = auth_keys['BEARER_TOKEN'], 
-                            wait_on_rate_limit = wait_on_rate_limit)
+# Set up the filtered stream
+listener = stream_builder.stream_builder(bearer_token=auth_keys['BEARER_TOKEN'],
+                                         display_text=True,
+                                         store_data=False,
+                                         wait_on_rate_limit=True)
 
 # Define the filter rules
 keyword_list_1 = ['put', 'your keywords', 'here']
 keyword_list_2 = ['put', 'other keywords', 'here']
 rules = [keyword_list_1, keyword_list_2]
 
-listener = rule_handler.clean_rules(listener)
-rule_list_1 = rule_handler.query_builder(keywords=keyword_list_1, api='elevated', 
-                                         language='en', query='')
-rule_list_2 = rule_handler.query_builder(keywords=keyword_list_2, api='elevated', 
-                                         language='en', query='')
-listener = rule_handler.push_rules(tweet_listener=listener, rules=rule_list_1,
-                                   rule_tag="keywords_1", clean_push=False)
+listener = rule_handler.rule_handler(tweet_listener=listener, 
+                                     keywords=rules, 
+                                     api_tier=api_tier, 
+                                     language='it', 
+                                     query='')
 
-listener = rule_handler.push_rules(tweet_listener=listener, rules=rule_list_2,
-                                   rule_tag="keywords_2", clean_push=False)
-
-# Set up the stream rules
 # launch the listener and choose what to store
 if launch_stream == True:
     listener.filter(

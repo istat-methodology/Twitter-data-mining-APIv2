@@ -132,3 +132,20 @@ def push_rules(tweet_listener, rules, rule_tag=None, clean_push=False):
     tweet_listener.add_rules(rules)
 
     return tweet_listener
+
+def rule_handler(tweet_listener, keywords, api_tier='elevated', language='it', query=''):
+    listener = rule_handler.clean_rules(tweet_listener)
+
+    query_list = []
+
+    for rule in list(keywords):
+        query_list[f'{rule}_rule'] = rule_handler.query_builder(keywords=rule,
+                                                                api=api_tier,
+                                                                language=language,
+                                                                query=query)
+        listener = rule_handler.push_rules(tweet_listener=listener,
+                                           rule = query_list[f'{rule}_rule'],
+                                           rule_tag=rule,
+                                           clean_push=False)
+    
+    return listener

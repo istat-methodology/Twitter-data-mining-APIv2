@@ -7,13 +7,13 @@ In order to get the authorization to stream Tweets we need to authenticate. Auth
 - **OAuth 1.0a (User Context)** - with this authentication method you can to make API requests on behalf of a Twitter user (yourself if the keys are obtained within your developer profile). This method requires you to use both the API Key and API Key Secret as well as the Access Token and the Access Token Secret as part of the authorization header in the API request.
 
 In order to choose your preferred authentication method you should include it in your configuration file (config.ini) in the following way:
-```
+```ini
 [twitter]
 
 authentication_method = OAuth2
 ```
 if you want to use the OAuth 2.0 Bearer Token (App only) authentication method, or:
-```
+```ini
 [twitter]
 
 authentication_method = OAuth1
@@ -24,8 +24,8 @@ if you wish to authenticate through the OAuth 1.0a (User Context) method.
 More detailed information on the Twitter API v2 authentication methods can be found [here](https://developer.twitter.com/en/docs/authentication/overview).
 
 #### How to authenticate
-In order to authenticate with your credentials, store your keys into a config.ini file and move it into the `./auth` folder. The python script will authomatically read the config file and use the provided keys to proceed with the authorization. The config.ini file should have the following structure:
-```
+In order to authenticate with your credentials, store your keys into a config.ini file and move it into the `config` folder. The python script will authomatically read the config file and use the provided keys to proceed with the authorization. The config.ini file should have the following structure:
+```ini
 [twitter]
 
 API_KEY = your api key
@@ -51,29 +51,24 @@ Access a real-time stream of tweets filtered by specific criteria. This powerful
 
 With Twitter API v2, developers can create filtered streams based on specific keywords, hashtags, geographic locations, languages, and more. The API delivers a continuous stream of tweets that match the specified criteria, making it an ideal solution for monitoring live events or analyzing social media sentiment.
 
-### Set up a filtered stream
+### Filtered stream
 
-We need to define a custom `MyStreamListener` class that inherits from `tweepy.StreamListener`. For example:
+In order to set up a simple filtered stream we need to define a custom `MyStreamListener` class that inherits from `tweepy.StreamingClient`. For example:
 
 ```python
-class MyStreamListener(tweepy.StreamListener):
+class MyStreamListener(tweepy.StreamingClient):
 
-    def __init__(self, api):
-        super().__init__(api=api)
-        self.tweet_count = 0
+    def on_connect(self):
+        print("Listener connected")
     
-    def on_status(self, status):
-        self.tweet_count += 1
-        remaining_tweets = api.rate_limit_status()['resources']['/statuses/filter']['remaining']
-        print(f"{tweet_count} tweets downloaded during the current stream. {remaining_tweets} tweets left.")
+    def on_data(self, data):
+        print(data.text)
     
     def on_error(self, status_code):
         if status_code == 420;
             print("Rate limited. Disconnecting...")
             return False
 ```
-
-- The `on_status` method is called whenever a new tweet is received by the stream. In this method, we increment the `tweet_count` variable, and then update `remaining_tweets` by calling `rate_limit_status()` on the API object.
+- The `on_connect` method is a callback method that is called automatically when the connection to the streaming service is established.
+- The `on_data` method is called whenever a new tweet is received by the stream. In this method, we print the text of the tweet whenever a new tweet is collected.
 - The `on_error` method is called whenever an error occurs with the stream. If the error code is 420 (rate limited), we print a message and return `False` to disconnect the stream.
-
-As the stream runs, the `on_status` method is called for each incoming tweet, and `remaining_tweets` is updated in real-time.

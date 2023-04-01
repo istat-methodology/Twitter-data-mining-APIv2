@@ -3,13 +3,13 @@
 import tweepy
 import json
 import datetime
-import authentication
+import modules.auth_module as auth_module
 
 keyword_filter = "FiltroFiducia.txt"
 rate_limit = True
 
 # authentication
-auth = authentication.get_auth("auth/config.ini")
+auth = auth_module.get_auth("config/config.ini")
 client = tweepy.Client(bearer_token = auth['BEARER_TOKEN'], 
                        consumer_key = auth['API_KEY'], 
                        consumer_secret = auth['API_KEY_SECRET'], 

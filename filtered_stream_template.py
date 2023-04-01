@@ -1,15 +1,15 @@
 # Filtered Stream template - Work in progress
 
-import authentication
-import rule_handler
-import stream_builder
+import modules.auth_module as auth_module
+import modules.rule_handler as rule_handler
+import modules.stream_builder as stream_builder
 
 api_tier = 'elevated'
 data_detail = 'text'
 launch_stream = False
 
 # Enter your API keys and access tokens
-auth = authentication.get_auth(config_file="auth/config.ini", 
+auth = auth_module.get_auth(config_file="config/config.ini", 
                                auth_method="OAuth2")
 api = auth[0]
 auth_keys = auth[1]

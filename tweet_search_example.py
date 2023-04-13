@@ -54,7 +54,7 @@ for query in rule_list_istat:
                                               user_fields="created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
                                               media_fields="duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width", 
                                               max_results=100).flatten(limit=1000000)
-        with open(f'data/output/search_data/tweets_filtroistat_batch_{start_date}_{end_date}.json', 'w') as tf:
+        with open(f'data/output/search_data/tweets_filtroistat_batch_{start_date}_{end_date}.json', 'a') as tf:
                 tf.write('\n')
                 json.dump(tweets_filtroistat, tf)
 
@@ -68,7 +68,7 @@ for query in rule_list_fiducia:
                                                 user_fields="created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
                                                 media_fields="duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width", 
                                                 max_results=100).flatten(limit=1000000)
-        with open(f'data/output/search_data/tweets_filtrofiducia_batch_{start_date}_{end_date}.json', 'w') as tf:
+        with open(f'data/output/search_data/tweets_filtrofiducia_batch_{start_date}_{end_date}.json', 'a') as tf:
                 tf.write('\n')
                 json.dump(tweets_filtrofiducia, tf)
         

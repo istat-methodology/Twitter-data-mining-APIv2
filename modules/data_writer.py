@@ -17,6 +17,6 @@ def write_tweets_to_json(data, d0, path="output/listener_data", format_string="{
     now = datetime.now()
     file_name = format_string.format(prefix="TweetsRawData", suffix="FiltroIstat" + d0.strftime("%Y%m%d-%H"))
     with open(f"{path}/{file_name}", 'a') as tf:
-        tf.write('\n')
+        #tf.write('\n')
         json.dump(json.loads(data), tf)
     return True

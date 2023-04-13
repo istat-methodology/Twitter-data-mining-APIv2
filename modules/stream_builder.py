@@ -1,5 +1,5 @@
 import tweepy
-import data_writer
+import modules.data_writer as data_writer
 import json
 from datetime import datetime
 
@@ -21,7 +21,7 @@ def stream_builder(bearer_token, display_text=False, store_data=False, data_path
     class MyStreamingClient(tweepy.StreamingClient):
 
         def on_connect(self):
-            print("Listener connected")
+            print("\nListener connected")
             self.tweet_count = 0
             self.d0 = datetime.now()
 
@@ -38,7 +38,10 @@ def stream_builder(bearer_token, display_text=False, store_data=False, data_path
 
         def on_error(self, tweet_code):
             if tweet_code == 420:
-                print("Rate limit exceeded. Disconnecting the stream...")
+                print("\nRate limit exceeded. Disconnecting the stream...")
+                return False
+            elif tweet_code == 400:
+                print("\nUsage cap reached. Disconnecting the stream...")
                 return False
 
     listener = MyStreamingClient(bearer_token=bearer_token, 

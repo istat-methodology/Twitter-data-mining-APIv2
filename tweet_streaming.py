@@ -16,6 +16,8 @@ wordlist_path     : str  = os.getenv("WORDLIST_PATH", ".")
 wait_on_rate_limit: bool = True
 
 DAPR_STORE_NAME = "statekeep"
+PUBSUB_NAME     = "ehpubsub"
+TOPIC_NAME      = "tweetsstream"
 
 class TwitterAuthenticator:
     def init(self, bearer_token):

@@ -12,11 +12,11 @@ d0 = datetime.now()
 
 # HYPERPARAMETERS
 rate_limit = True
-launch = False    # True if you want to start collecting tweets
+launch = True    # True if you want to start collecting tweets
 
 
 # AUTHENTICATION
-auth = auth_module.get_auth(config_file="config/config.ini", auth_method="OAuth2")
+auth = auth_module.get_auth(config_file="config/config_FO.ini", auth_method="OAuth2")
 api = auth[0]
 auth_keys = auth[1]
 
@@ -29,14 +29,8 @@ class TweetListenerISTAT_V2(tweepy.StreamingClient):
     def on_connect(self):                       # check if the listener is connected
         print("Listener Connected")
     
-    def on_data(self, data):                    # store the data in a .json file
-        jsonData = json.loads(data)
-        d1 = datetime.now()
-        file_name = f"TweetsRawData.{d1.year}{d1.month:02d}{d1.day:02d}-{d1.hour:02d}.FiltroIstat{d0.year}{d0.month:02d}{d0.day:02d}-{d0.hour:02d}.queue.json"
-        with open(f"data/output/listener_data/{file_name}", 'a') as tf:
-            tf.write('\n')
-            json.dump(jsonData, tf)
-        return True
+    def on_tweet(self, tweet):                    # store the data in a .json file
+        print(tweet)
     
     def on_error(self, tweet_code):             # handle errors
         if tweet_code == 420:
@@ -64,21 +58,23 @@ keywords_filter_fiducia_unique = [word for word in keywords_filter_fiducia if wo
 
 # RULES
 
+keywords = ("famiglia OR denaro")
+
 # delete pre-existing rules
 listener = rule_handler.clean_rules(listener)
 
 # extract the list of rules
-rule_list_istat = rule_handler.query_builder(keywords=keywords_filter_istat_unique, 
-                                             api='elevated', language='it', query='')
-rule_list_fiducia = rule_handler.query_builder(keywords=keywords_filter_fiducia,
-                                               api='elevated', language='it', query='')
+rule_list_istat = rule_handler.query_builder(keywords=keywords, 
+                                             max_length=512, lang='it')
+#rule_list_fiducia = rule_handler.query_builder(keywords=keywords_filter_fiducia,
+#                                               max_length=512, lang='it')
 
 # add the rules to the filtered stream
 listener = rule_handler.push_rules(tweet_listener=listener, rules=rule_list_istat,
                                    rule_tag="filtro_istat", clean_push=False)
 
-listener = rule_handler.push_rules(tweet_listener=listener, rules=rule_list_fiducia,
-                                   rule_tag="filtro_fiducia", clean_push=False)
+#listener = rule_handler.push_rules(tweet_listener=listener, rules=rule_list_fiducia,
+#                                   rule_tag="filtro_fiducia", clean_push=False)
 
 
 # launch the listener and choose what to store

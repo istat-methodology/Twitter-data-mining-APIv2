@@ -1,6 +1,7 @@
 # RULE HANDLER - WORK IN PROGRESS!!!
 
 import tweepy
+from typing import List
 
 # clean_rules: this function deletes all the rules from the filtered stream passed as an argument
 def clean_rules(tweet_listener):
@@ -27,70 +28,36 @@ def clean_rules(tweet_listener):
     return tweet_listener
 
 
-def query_builder(keywords, language=None, query=None, api="elevated"):
+def query_builder(keywords: List[str], lang: str = 'it', api_tier: str = 'elevated') -> List[str]:
 
     """
-    Builds a query string based on the provided keywords, language, and query parameters.
+    Create a list of Twitter API search queries from a list of keywords.
 
     Args:
-        keywords (list of str): List of keywords to be included in the query.
-        language (str, optional): Language to be included in the query. Defaults to None.
-        query (str, optional): Additional query parameter to be included in the query. Defaults to None.
-        api (str, optional): API to be used for the query. Defaults to 'elevated'.
+        keywords (List[str]): A list of keywords to be used in the search queries.
+        lang (str): A string representing the language of the search queries.
+        max_length (int): An integer representing the maximume number of character for each query. 
+        Defaults to 512.
 
     Returns:
-        list of str: List of query strings to be used in the search.
+        List[str]: A list of Twitter API search queries.
     """
-    lang_string = f" lang:{language}" if language else ""
-    query_string = f" {query}" if query else ""
-    
-    len_query = len(lang_string + query_string)
-    len_query += 2 if len_query > 0 else 0
+    if api_tier == 'essential' or 'elevated':
+        max_length = 512
+    elif api_tier == 'academic':
+        max_length = 1024
 
-    api_options = {
-        'essential': (512 - len_query, 5),
-        'elevated': (512 - len_query, 25),
-        'academic': (1024 - len_query, 1000)
-    }
-    max_chars, max_rules = api_options.get(api, None)
-    if max_chars is None:
-        raise ValueError("\nERROR: 'api' must be either 'essential', 'elevated' or 'academic'.")
+    queries = []
+    current_query = '('
+    for keyword in keywords:
+        if len(current_query + keyword + f' lang{lang}') < max_length:
+            current_query += keyword + ' OR '
+        else:
+            queries.append(current_query[:-4] + f') lang:{lang}')
+            current_query = '(' + keyword + ' OR '
+    queries.append(current_query[:-4] + f') lang:{lang}')
 
-    # Create a single string from the list
-    single_string = " OR ".join(keywords)
-    # Split the single string into multiple strings based on the maximum length
-    split_strings = []
-    n_rules = 0
-    start = 0
-    while start < len(single_string):
-        n_rules += 1
-        # Find the end of the substring based on the maximum length
-        end = start + max_chars
-        # If the substring ends in the middle of a word, adjust the end to the end of the previous word
-        end = single_string.rfind(" ", start, end+1)
-        if end == -1:
-            end = start + max_chars
-        # If the substring ends in "OR", adjust the end to exclude it
-        if single_string.endswith(" OR", start, end):
-            end -= 3
-        # If the substring starts with "OR", adjust the start to exclude it
-        if single_string.startswith("OR ", start, end):
-            start += 3
-        query_i = f"({single_string[start:end]}){lang_string}{query_string}"
-        # If the final string ends with a blank space, adjust the end to remove it
-        query_i = query_i.rstrip()
-        split_strings.append(query_i)
-        start = end + 1
-    
-    if n_rules > max_rules:
-        print(f"""\nWARNING: the number of rules ({n_rules}) exceeds the maximum number of rules ({max_rules}) 
-        allowed by your API ({api}).""")
-    else:
-        print(f"\nthe final number of rules is {n_rules}.")
-
-    split_strings_final = [keyword.replace("|", " ") for keyword in split_strings]
-
-    return split_strings_final
+    return queries
 
 # push_rules: this function automatically adds a list of rules to the stream
 def push_rules(tweet_listener, rules, rule_tag=None, clean_push=False):
@@ -122,7 +89,7 @@ def push_rules(tweet_listener, rules, rule_tag=None, clean_push=False):
     return tweet_listener
 
 
-def rule_handler(tweet_listener, keywords, api_tier='elevated', language='it', query='', clean_rules=True):
+def rule_handler(tweet_listener, keywords, api_tier='elevated', lang='it', clean_rules=True):
 
     """
     Update the rules for a Twitter stream listener based on a set of keywords.
@@ -146,8 +113,8 @@ def rule_handler(tweet_listener, keywords, api_tier='elevated', language='it', q
     for rule in list(keywords):
         query_list[f'{rule}_rule'] = rule_handler.query_builder(keywords=rule,
                                                                 api=api_tier,
-                                                                language=language,
-                                                                query=query)
+                                                                lang=lang)
+        
         listener = rule_handler.push_rules(tweet_listener=listener,
                                            rule = query_list[f'{rule}_rule'],
                                            rule_tag=rule,

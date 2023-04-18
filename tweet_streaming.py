@@ -53,8 +53,9 @@ class QueryHandler:
         result = self.tweet_listener.get_rules()
 
         if result.data is not None:
-            rule_ids = [rule["id"] for rule in result.data]
+            rule_ids = [rule.id for rule in result.data]
             print(f"rule(s) marked to delete: {rule_ids}")
+
             self.tweet_listener.delete_rules(rule_ids)
         else:
             print("no rules marked to delete")

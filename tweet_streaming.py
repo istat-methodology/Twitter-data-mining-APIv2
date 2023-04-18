@@ -19,15 +19,7 @@ DAPR_STORE_NAME = "statekeep"
 PUBSUB_NAME     = "ehpubsub"
 TOPIC_NAME      = "tweetsstream"
 
-class TwitterAuthenticator:
-    def init(self, bearer_token):
-        #self.client = tweepy.Client(api_key=consumer_key, api_secret_key=consumer_secret) #, access_token=access_token, access_token_secret=access_token_secret)
-        self.bearer_token = bearer_token
-    
-    def authenticate(self) -> tweepy.API:
-        auth = tweepy.OAuth2BearerHandler(self.bearer_token)
-        api = tweepy.API(auth)
-        return api
+client = tweepy.Client(bearer_token)
 
 class TweetListener(tweepy.StreamingClient):
     def on_connect(self):

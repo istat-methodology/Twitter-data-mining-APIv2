@@ -1,0 +1,4 @@
+dapr
+requests
+tweepy
+json

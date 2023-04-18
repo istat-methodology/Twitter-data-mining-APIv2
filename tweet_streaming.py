@@ -91,10 +91,6 @@ class QueryHandler:
 
         return self.tweet_listener
 
-# authentication
-authenticator = TwitterAuthenticator(bearer_token)
-api = authenticator.authenticate()
-
 # tweet listener
 listener = TweetListener(bearer_token=bearer_token, wait_on_rate_limit=wait_on_rate_limit)
 

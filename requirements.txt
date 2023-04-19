@@ -1,4 +1,0 @@
-dapr
-requests
-tweepy
-json

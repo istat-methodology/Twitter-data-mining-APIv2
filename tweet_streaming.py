@@ -1,39 +1,28 @@
 import tweepy
 import json
-import os
-import requests
-import logging
-from dapr.clients import DaprClient
-from dapr.clients.grpc._state import StateItem
-from dapr.clients.grpc._request import TransactionalStateOperation, TransactionOperationType
 from typing import List
 
-consumer_key      : str  = os.getenv("CONSUMER_KEY")
-consumer_secret   : str  = os.getenv("CONSUMER_SECRET")
-api_tier          : str  = os.getenv("API_TIER", "elevated")
-bearer_token      : str  = os.getenv("BEARER_TOKEN")
-wordlist_path     : str  = os.getenv("WORDLIST_PATH", ".")
+api_tier: str = "elevated"
+launch_stream: bool = False
+authentication_method: str = "OAuth2"
+bearer_token: str = "your bearer token"
 wait_on_rate_limit: bool = True
 
-DAPR_STORE_NAME = "statekeep"
-
-client = tweepy.Client(bearer_token)
+class TwitterAuthenticator:
+    def init(self, bearer_token):
+        self.bearer_token = bearer_token
+    
+    def authenticate(self) -> tweepy.API:
+        auth = tweepy.OAuth2BearerHandler(self.bearer_token)
+        api = tweepy.API(auth)
+        return api
 
 class TweetListener(tweepy.StreamingClient):
     def on_connect(self):
         print("Listener connected succesfully.")
     
     def on_data(self, tweet_raw):
-        with DaprClient() as client:
-            currentNum = client.get_state(DAPR_STORE_NAME, "tweetNum")
-            client.save_state(DAPR_STORE_NAME, "tweetNum", currentNum + 1) 
-
-            result = client.publish_event(
-                pubsub_name=PUBSUB_NAME,
-                topic_name=TOPIC_NAME,
-                data=json.dumps(tweet_raw),
-                data_content_type='application/json',
-            )
+        json.dump(tweet_raw)
     
     def on_errors(self, status_code: int) -> bool:
         if status_code==400:
@@ -96,10 +85,10 @@ api = authenticator.authenticate()
 listener = TweetListener(bearer_token=bearer_token, wait_on_rate_limit=wait_on_rate_limit)
 
 # import keyword filters
-keywords_filter_istat_raw = open(f"{wordlist_path}/filters/FiltroIstat.txt", "r").readlines()
+keywords_filter_istat_raw = open(f"filters/FiltroIstat.txt", "r").readlines()
 keywords_filter_istat = [word.strip() for word in keywords_filter_istat_raw]
 
-keywords_filter_fiducia_raw = open(f"{wordlist_path}/filters/FiltroFiducia.txt", "r").readlines()
+keywords_filter_fiducia_raw = open(f"filters/FiltroFiducia.txt", "r").readlines()
 keywords_filter_fiducia = [word.strip() for word in keywords_filter_fiducia_raw]
 
 keywords_filter_istat_unique = [word for word in keywords_filter_istat if word not in keywords_filter_fiducia]
@@ -110,17 +99,18 @@ query_handler = QueryHandler(listener, api_tier=api_tier)
 query_filtroistat = query_handler.query_builder(keywords=keywords_filter_istat_unique)
 query_filtrofiducia = query_handler.query_builder(keywords=keywords_filter_fiducia)
 
+"""
 listener = query_handler.clean_rules()
 listener = query_handler.push_rules(rules=query_filtrofiducia, rule_tag='filtrofiducia')
 listener = query_handler.push_rules(rules=query_filtroistat, rule_tag='filtroistat')
-
+"""
 # launch the listener and choose what to store
 if launch_stream == True:
     listener.filter(
-        expansions="attachments.poll_ids,attachments.media_keys,author_id,geo.place_id,in_reply_to_user_id,referenced_tweets.id,entities.mentions.username,referenced_tweets.id.author_id",
-        tweet_fields="attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,reply_settings,source,text,withheld,edit_history_tweet_ids,edit_controls",
-        poll_fields="duration_minutes,end_datetime,id,options,voting_status",
-        place_fields="contained_within,country,country_code,full_name,geo,id,name,place_type",
-        user_fields="created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
-        media_fields="duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width"
+    expansions="attachments.poll_ids,attachments.media_keys,author_id,geo.place_id,in_reply_to_user_id,referenced_tweets.id,entities.mentions.username,referenced_tweets.id.author_id",
+    tweet_fields="attachments,author_id,context_annotations,conversation_id,created_at,entities,geo,id,in_reply_to_user_id,lang,possibly_sensitive,public_metrics,referenced_tweets,reply_settings,source,text,withheld,edit_history_tweet_ids,edit_controls",
+    poll_fields="duration_minutes,end_datetime,id,options,voting_status",
+    place_fields="contained_within,country,country_code,full_name,geo,id,name,place_type",
+    user_fields="created_at,description,entities,id,location,name,pinned_tweet_id,profile_image_url,protected,public_metrics,url,username,verified,withheld",
+    media_fields="duration_ms,height,media_key,preview_image_url,public_metrics,type,url,width"
     )

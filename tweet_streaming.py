@@ -33,7 +33,7 @@ class TweetListener(tweepy.StreamingClient):
             result = client.publish_event(
                 pubsub_name=PUBSUB_NAME,
                 topic_name=TOPIC_NAME,
-                data=str(tweet_raw),
+                data=tweet_raw.decode(),
                 data_content_type='application/json',
             )
     

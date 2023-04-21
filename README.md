@@ -1,74 +1,48 @@
-# Twitter data mining (API v2)
+# Twitter Data Mining (API v2)
 A collection of Python scripts built around the [Tweepy](https://github.com/tweepy/tweepy) module to extract data from Twitter (API v2).
 
-## Authentication
-In order to get the authorization to stream Tweets we need to authenticate. Authentication is achieved through the personal API keys of the Twitter Developer account. There are different ways to authenticate through tweepy: in particular, tweepy's interface for Twitter API v2, `tweepy.Client`, automatically handles both OAuth 2.0 Bearer Token (application only) and OAuth 1.0a User Context authentication:
-- **OAuth 2.0 Bearer Token (App only)** - with this authentication method you can make API requests on behalf of your Twitter Developer App using only the Bearer Token, with no connection to your user profile. This authentication method is suited for read-only access to public information, sucha as public Tweets. This authentication method is not suited to retrieve data that is not publicly available.
-- **OAuth 1.0a (User Context)** - with this authentication method you can to make API requests on behalf of a Twitter user (yourself if the keys are obtained within your developer profile). This method requires you to use both the API Key and API Key Secret as well as the Access Token and the Access Token Secret as part of the authorization header in the API request.
+## Tweet Listener with Keyword Filtering (Filtered Stream endpoint)
 
-In order to choose your preferred authentication method you should include it in your configuration file (config.ini) in the following way:
-```ini
-[twitter]
+This Python code sets up a Twitter API listener using the Tweepy library to collect and filter tweets containing specific keywords. The listener connects to the Twitter API using a bearer token and filters tweets based on lists of keywords stored in text files.
 
-authentication_method = OAuth2
-```
-if you want to use the OAuth 2.0 Bearer Token (App only) authentication method, or:
-```ini
-[twitter]
+### Prerequisites
 
-authentication_method = OAuth1
-```
-if you wish to authenticate through the OAuth 1.0a (User Context) method.
+Before running this code, you need to have a Twitter Developer account and create an app to generate a bearer token. You also need to install the following Python packages:
 
+    tweepy
+    json
+    os
+    typing
+    datetime
 
-More detailed information on the Twitter API v2 authentication methods can be found [here](https://developer.twitter.com/en/docs/authentication/overview).
+### Usage
 
-#### How to authenticate
-In order to authenticate with your credentials, store your keys into a config.ini file and move it into the `config` folder. The python script will authomatically read the config file and use the provided keys to proceed with the authorization. The config.ini file should have the following structure:
-```ini
-[twitter]
+To use this code, first fill in your Twitter API bearer token in the `bearer_token` variable. This token is necessary for authentication and authorization to use the Twitter API.
 
-API_KEY = your api key
-API_KEY_SECRET = your api key secret
-BEARER_TOKEN = your bearer token
-ACCESS_TOKEN = your access token
-ACCESS_TOKEN_SECRET = your access token secret
-```
-Once the config file is set up, complete the authentication process calling the `get_auth` function from the `authentication` module:
+Next, specify the path to the directory containing the filter files in `wordlist_path`. The keyword lists for filtering are stored text files. These files contain one keyword per line. You can modify these files to include or exclude specific keywords based on your filtering needs. The script is set up to filter on two different sets of keywords and assign different rule tags.
 
-```python
-import authentication
+By default, `launch_stream` is set to `False`, meaning that the listener will not be launched when you run the script. If you want to activate the listener and start collecting data, set this value to `True`.
 
-auth = authentication.get_auth(config_file_path)
-```
-This function will automatically handle the authentication process based on the information provided in the config file.
+The `store_data` variable determines whether or not the filtered tweets will be stored as JSON files in the `data` directory. If this value is `True`, the code will check if the `data` directory exists and create it if necessary. If it already exists, it will use it to store the data.
 
-## Rules
-The rule handling module `rule_handler.py` automatically handles query and rule building based on a list of keywords and other parameters. 
+When the listener is running, it will print a message to the console to confirm that it has connected successfully. It will also create a new JSON file for each hour of data received, with a filename based on the current date and time. Each JSON file contains a list of tweets that passed through the filtering rules.
 
-## Tweet listener | _Filtered stream_
-Access a real-time stream of tweets filtered by specific criteria. This powerful feature provides a way to monitor and analyze Twitter conversations in real-time, enabling developers to gain insights into trending topics, sentiment analysis, and other important metrics.
+### Listener Options
 
-With Twitter API v2, developers can create filtered streams based on specific keywords, hashtags, geographic locations, languages, and more. The API delivers a continuous stream of tweets that match the specified criteria, making it an ideal solution for monitoring live events or analyzing social media sentiment.
+The listener uses the `TweetListener` class, which extends Tweepy's `StreamingClient` class. The `TweetListener` class has three methods that can be overridden:
 
-### Filtered stream
+- `on_connect`: This method is called when the listener successfully connects to the Twitter API. It prints a message to the console and creates a new directory to store the data if `store_data` is True.
 
-In order to set up a simple filtered stream we need to define a custom `MyStreamListener` class that inherits from `tweepy.StreamingClient`. For example:
+- `on_data`: This method is called when the listener receives a new tweet that passes through the filtering rules. If `store_data` is `True`, it stores the tweet in a JSON file in the `data` directory. The JSON file is named based on the current date and time.
 
-```python
-class MyStreamListener(tweepy.StreamingClient):
+- `on_errors`: This method is called when the listener encounters an error. If the error code is 400 (Usage cap exceeded), the method returns False to stop the listener.
 
-    def on_connect(self):
-        print("Listener connected")
-    
-    def on_data(self, data):
-        print(data.text)
-    
-    def on_error(self, status_code):
-        if status_code == 420;
-            print("Rate limited. Disconnecting...")
-            return False
-```
-- The `on_connect` method is a callback method that is called automatically when the connection to the streaming service is established.
-- The `on_data` method is called whenever a new tweet is received by the stream. In this method, we print the text of the tweet whenever a new tweet is collected.
-- The `on_error` method is called whenever an error occurs with the stream. If the error code is 420 (rate limited), we print a message and return `False` to disconnect the stream.
+## Query Handler Module
+
+The `QueryHandler` class is used to set up the filter rules based on the keyword lists. The class has the following methods:
+
+- `query_builder`: This method takes a list of keywords and builds a query for filtering tweets that contain any of the keywords. The method returns a dictionary containing the filter rules.
+
+- `clean_rules`: This method removes any existing filter rules associated with the listener.
+
+- `push_rules`: This method adds new filter rules to the listener. It takes a list of rules and a tag for the rules as arguments. The method returns the updated listener.
